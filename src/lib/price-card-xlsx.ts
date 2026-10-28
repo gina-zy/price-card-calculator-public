@@ -160,7 +160,7 @@ async function parseWorkbook(file: File) {
 }
 
 export async function parsePriceCardFiles(files: File[]): Promise<ParsedPriceCards> {
-  if (files.length < 1 || files.length > 5) throw new Error("一次请选择 1-5 个 .xlsx 文件");
+  if (files.length < 1 || files.length > 10) throw new Error("一次请选择 1-10 个 .xlsx 文件");
   if (files.some((file) => !file.name.toLowerCase().endsWith(".xlsx"))) throw new Error("仅支持 .xlsx 文件");
   const results = await Promise.all(files.map(parseWorkbook));
   const cards = results.flatMap((result) => result.cards);
