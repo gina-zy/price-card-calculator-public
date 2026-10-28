@@ -1,0 +1,6 @@
+{
+    "app_name": "price-card-calculator-public",
+    "app_description": "面向商家的公开价卡计算器，匿名访问并在浏览器本地完成计算",
+    "capabilities": [],
+    "datasources": {}
+}

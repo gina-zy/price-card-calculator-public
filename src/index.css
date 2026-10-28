@@ -1,0 +1,209 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens. Components only use the semantic utilities below
+ * (bg-surface, text-fg-muted, bg-primary ...); raw scales are for rare edge cases.
+ * To rebrand, replace the --color-brand-* scale only; keep 600 as the primary
+ * action color with >= 4.5:1 contrast against white text.
+ */
+@theme {
+  --font-sans:
+    "Inter Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --color-brand-50: #f0f4ff;
+  --color-brand-100: #e1eaff;
+  --color-brand-200: #bacefd;
+  --color-brand-300: #82a7fc;
+  --color-brand-400: #4e83fd;
+  --color-brand-500: #3370ff;
+  --color-brand-600: #245bdb;
+  --color-brand-700: #1c4cba;
+  --color-brand-800: #133c9a;
+  --color-brand-900: #0c296e;
+  --color-brand-950: #081a47;
+
+  --color-gray-50: #f7f8fa;
+  --color-gray-100: #f2f3f5;
+  --color-gray-200: #e5e6eb;
+  --color-gray-300: #c9cdd4;
+  --color-gray-400: #a9aeb8;
+  --color-gray-500: #86909c;
+  --color-gray-600: #6b7785;
+  --color-gray-700: #4e5969;
+  --color-gray-800: #272e3b;
+  --color-gray-900: #1d2129;
+  --color-gray-950: #12151b;
+
+  --shadow-overlay:
+    0 4px 12px -2px rgb(15 23 42 / 0.12), 0 2px 4px -2px rgb(15 23 42 / 0.08);
+
+  --animate-fade-in: fade-in 150ms ease-out;
+  --animate-pop-in: pop-in 150ms ease-out;
+  --animate-slide-in-left: slide-in-left 200ms ease-out;
+  --animate-slide-in-right: slide-in-right 200ms ease-out;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+  }
+  @keyframes slide-in-left {
+    from {
+      transform: translateX(-100%);
+    }
+  }
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(100%);
+    }
+  }
+}
+
+:root {
+  --canvas: var(--color-gray-50);
+  --surface: #ffffff;
+  --muted: var(--color-gray-100);
+  --border: var(--color-gray-200);
+  --border-strong: var(--color-gray-300);
+  --fg: var(--color-gray-900);
+  --fg-muted: var(--color-gray-700);
+  --fg-subtle: var(--color-gray-600);
+  --fg-placeholder: var(--color-gray-500);
+
+  --primary: var(--color-brand-600);
+  --primary-hover: var(--color-brand-700);
+  --primary-fg: #ffffff;
+  --primary-soft: var(--color-brand-50);
+  --primary-soft-fg: var(--color-brand-700);
+  --ring: var(--color-brand-500);
+
+  --success: #00b42a;
+  --success-fg: #0f7b2e;
+  --success-soft: #e8f7ec;
+  --warning: #ff7d00;
+  --warning-fg: #a35200;
+  --warning-soft: #fff3e8;
+  --danger: #d7312e;
+  --danger-hover: #b8211f;
+  --danger-fg: #c0272d;
+  --danger-soft: #ffece8;
+
+  --overlay: rgb(15 23 42 / 0.4);
+  color-scheme: light;
+}
+
+.dark {
+  --canvas: #111215;
+  --surface: #18191d;
+  --muted: #232429;
+  --border: #2c2e34;
+  --border-strong: #3c3f46;
+  --fg: #e6e8eb;
+  --fg-muted: #b4b9c2;
+  --fg-subtle: #8f959f;
+  --fg-placeholder: #6f7580;
+
+  --primary: var(--color-brand-600);
+  --primary-hover: var(--color-brand-500);
+  --primary-fg: #ffffff;
+  --primary-soft: rgb(51 112 255 / 0.16);
+  --primary-soft-fg: var(--color-brand-300);
+  --ring: var(--color-brand-400);
+
+  --success: #23c343;
+  --success-fg: #5fd47a;
+  --success-soft: rgb(35 195 67 / 0.14);
+  --warning: #ff9a2e;
+  --warning-fg: #ffb366;
+  --warning-soft: rgb(255 154 46 / 0.14);
+  --danger: #e5484d;
+  --danger-hover: #f2555a;
+  --danger-fg: #ff8a8a;
+  --danger-soft: rgb(229 72 77 / 0.16);
+
+  --overlay: rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-fg-placeholder: var(--fg-placeholder);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-fg: var(--primary-fg);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-fg: var(--primary-soft-fg);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-fg: var(--success-fg);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-fg: var(--warning-fg);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-danger-fg: var(--danger-fg);
+  --color-danger-soft: var(--danger-soft);
+  --color-overlay: var(--overlay);
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-fg);
+    font-size: 14px;
+    line-height: 1.5715;
+  }
+
+  ::selection {
+    background-color: var(--color-brand-100);
+    color: var(--color-gray-900);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 1ms !important;
+      transition-duration: 1ms !important;
+    }
+  }
+}
