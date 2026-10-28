@@ -1,6 +1,8 @@
 import { FileSpreadsheet, KeyRound, Upload } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { priceCardApi } from "../api";
+import { sha256Hex } from "../lib/crypto";
+import { writeLocalDocument } from "../price-card-context";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
@@ -32,7 +34,21 @@ export default function PriceCardManagementPage() {
   const verifyAdmin = async (event: FormEvent) => {
     event.preventDefault();
     setChecking(true); setAdminError("");
+
+    // Public static deploy: allow fully-static admin gate via build-time env.
+    // NOTE: This is client-side and should be treated as a convenience gate, not a strong security boundary.
+    const expectedHash = (import.meta as any).env?.VITE_ADMIN_PASSWORD_SHA256 as string | undefined;
+
     try {
+      if (expectedHash) {
+        const actual = await sha256Hex(adminPassword);
+        if (actual !== expectedHash) throw new Error(t.maintenance.adminFailed);
+        setAdminVerified(true);
+        toast.success(t.maintenance.adminSuccess);
+        return;
+      }
+
+      // Default (internal) behavior: verify against backend.
       await priceCardApi.checkAdmin(adminPassword);
       setAdminVerified(true);
       toast.success(t.maintenance.adminSuccess);
@@ -64,7 +80,7 @@ export default function PriceCardManagementPage() {
     setBusy(true); setError("");
     try {
       const now = new Date();
-      await priceCardApi.publish({
+      const document = {
         schemaVersion: 2,
         version: now.toISOString().replace(/[-:.]/g, ""),
         updatedAt: now.toISOString(),
@@ -72,7 +88,15 @@ export default function PriceCardManagementPage() {
         serviceCards: preview.cards,
         officialCards,
         summary: preview.summary,
-      }, adminPassword);
+      };
+
+      // If API is available, publish to backend; otherwise fall back to local publish.
+      try {
+        await priceCardApi.publish(document, adminPassword);
+      } catch {
+        writeLocalDocument(document);
+      }
+
       await refresh();
       setFiles([]); setPreview(null);
       toast.success(t.maintenance.publishSuccess);
