@@ -20,9 +20,12 @@ function destinationRank(card: ServicePriceCard, selected: string): number | nul
   return null;
 }
 
-function categoryRank(card: ServicePriceCard, selected: string): number | null {
-  if (card.categoryTags.includes(selected)) return 0;
-  if (!card.categoryTags.length && card.channel.includes(selected)) return 1;
+function categoryRank(card: ServicePriceCard, selected: string[]): number | null {
+  if (!selected.length) return null;
+  // OR semantics: any selected category can match.
+  if (selected.some((c) => card.categoryTags.includes(c))) return 0;
+  if (!card.categoryTags.length && selected.some((c) => card.channel.includes(c))) return 1;
+  // Backward-compat: blank categoryTags are treated as a low-priority candidate.
   if (!card.categoryTags.length) return 2;
   return null;
 }
@@ -62,7 +65,7 @@ function amount(card: ServicePriceCard, weight: number, volume: number): { amoun
 export function quoteServices(cards: ServicePriceCard[], input: QuoteInput): { quotes: ServiceQuote[]; rejected: RejectedServiceCard[] } {
   const volume = input.dimensionsCm ? input.dimensionsCm.length * input.dimensionsCm.width * input.dimensionsCm.height / 1_000_000 : input.volumeM3 ?? 0;
   const prepared = cards.map((card) => {
-    const dr = destinationRank(card, input.destination); const cr = categoryRank(card, input.category);
+    const dr = destinationRank(card, input.destination); const cr = categoryRank(card, input.categories);
     const volumetric = volumeWeightKg(card, input); const charged = chargeableWeight(card, input.actualWeightKg, volumetric);
     return { card, dr, cr, volumetric, charged };
   }).filter((x) => x.dr !== null && x.cr !== null && (!input.transportMode || x.card.transportMode === input.transportMode) && (!input.provider || x.card.provider === input.provider) && (!input.channel || x.card.channel === input.channel));
