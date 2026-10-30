@@ -9,6 +9,7 @@ import { Checkbox } from "../components/ui/Checkbox";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import { Field } from "../components/ui/Field";
 import { Input } from "../components/ui/Input";
+import { MultiSelect } from "../components/ui/MultiSelect";
 import { Select } from "../components/ui/Select";
 import { useLocale } from "../locale-context";
 import { convertOfficialToRmb, formatReferenceRmb, normalizeExchangeRates } from "../lib/exchange-rates";
@@ -21,7 +22,7 @@ const number = (value: string) => value === "" ? null : Number(value);
 export default function CalculatorPage() {
   const { t, locale } = useLocale();
   const { serviceCards, officialCards, exchangeRates, loading: dataLoading, error: dataError, refresh } = usePriceCards();
-  const [category, setCategory] = useState("食品");
+  const [categoriesSelected, setCategoriesSelected] = useState<string[]>(["食品"]);
   const [weight, setWeight] = useState("500");
   const [weightUnit, setWeightUnit] = useState("g");
   const [length, setLength] = useState("100");
@@ -44,7 +45,15 @@ export default function CalculatorPage() {
   const providers = useMemo(() => [...new Set(serviceCards.map((card) => card.provider))].sort(), [serviceCards]);
   useEffect(() => { setSelectedProviders((current) => current.length ? current.filter((provider) => providers.includes(provider)) : providers); }, [providers]);
   const destinations = useMemo(() => [...new Set([...serviceCards.map((card) => card.destination), ...officialCards.map((card) => card.country), "马来西亚", "西马", "东马"])].sort(), [serviceCards, officialCards]);
-  const categories = useMemo(() => [...new Set(serviceCards.flatMap((card) => card.categoryTags))].sort(), [serviceCards]);
+  const categories = useMemo(() => [...new Set(serviceCards.flatMap((card) => card.categoryTags).filter(Boolean))].sort(), [serviceCards]);
+  useEffect(() => {
+    setCategoriesSelected((current) => {
+      const filtered = current.filter((c) => categories.includes(c));
+      if (filtered.length) return filtered;
+      if (categories.includes("食品")) return ["食品"]; // keep the previous default if possible
+      return categories.length ? [categories[0]!] : [];
+    });
+  }, [categories]);
   const channels = useMemo(() => [...new Set(serviceCards.filter((card) => selectedProviders.includes(card.provider) && card.transportMode === transportMode).map((card) => card.channel))].sort(), [serviceCards, selectedProviders, transportMode]);
   useEffect(() => { if (channel && !channels.includes(channel)) setChannel(""); }, [channel, channels]);
 
@@ -52,12 +61,12 @@ export default function CalculatorPage() {
     event.preventDefault();
     const actual = Number(weight) / (weightUnit === "g" ? 1000 : 1);
     const dims = [number(length), number(width), number(height)];
-    if (!category || !destination || selectedProviders.length === 0 || !Number.isFinite(actual) || actual <= 0
+    if (!categoriesSelected.length || !destination || selectedProviders.length === 0 || !Number.isFinite(actual) || actual <= 0
       || dims.some((item) => item === null || !Number.isFinite(item) || item <= 0)) {
       setError(t.calculator.required); return;
     }
     const input: QuoteInput = {
-      category,
+      categories: categoriesSelected,
       actualWeightKg: actual,
       volumeM3: null,
       dimensionsCm: { length: dims[0]!, width: dims[1]!, height: dims[2]! },
@@ -94,7 +103,20 @@ export default function CalculatorPage() {
       <form className="border-b pb-6" onSubmit={submit}>
         <h2 className="mb-4 text-base font-semibold">{t.calculator.formTitle}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field htmlFor="category" label={t.calculator.category} required><Select id="category" options={categories.map((v) => ({ value: v, label: v }))} value={category} onValueChange={setCategory} /></Field>
+          <Field htmlFor="category" label={t.calculator.category} required>
+            <MultiSelect
+              id="category"
+              required
+              options={categories.map((v) => ({ value: v, label: v }))}
+              placeholder={t.calculator.select}
+              searchPlaceholder={t.calculator.categorySearch}
+              noResultsText={t.calculator.noResults}
+              clearText={t.calculator.clearSelection}
+              selectedCountText={(count) => t.calculator.selectedCategories.replace("{count}", String(count))}
+              value={categoriesSelected}
+              onValueChange={setCategoriesSelected}
+            />
+          </Field>
           <Field htmlFor="weight" label={t.calculator.weight} required><div className="flex gap-2"><Input id="weight" inputMode="decimal" min="0" step="any" type="number" value={weight} onChange={(e) => setWeight(e.target.value)} /><Select aria-label={t.calculator.weightUnit} className="w-24" options={[{ value: "g", label: t.calculator.g }, { value: "kg", label: t.calculator.kg }]} value={weightUnit} onValueChange={setWeightUnit} /></div></Field>
           <Field htmlFor="length" label={t.calculator.lengthCm} required><Input id="length" inputMode="decimal" min="0" step="any" type="number" value={length} onChange={(e) => setLength(e.target.value)} /></Field>
           <Field htmlFor="width" label={t.calculator.widthCm} required><Input id="width" inputMode="decimal" min="0" step="any" type="number" value={width} onChange={(e) => setWidth(e.target.value)} /></Field>

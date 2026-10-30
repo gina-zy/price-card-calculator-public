@@ -9,7 +9,7 @@ const base: ServicePriceCard = {
   ratePerKg: 10, handlingFee: 5, ratePerCbm: null, minimumCbm: null, cbmIncrement: null, kgIncrement: null, volumetricDivisor: 6000,
   shipmentLimitKg: 30, transitTime: "", valueAddedServicesRaw: "", nonKgDetails: {}, restrictions: "", status: "ok", blockers: [], warnings: [],
 };
-const input: QuoteInput = { category: "食品", actualWeightKg: 1.2, volumeM3: null, dimensionsCm: { length: 10, width: 10, height: 10 }, destination: "西马", transportMode: "海运", provider: "测试", channel: "" };
+const input: QuoteInput = { categories: ["食品"], actualWeightKg: 1.2, volumeM3: null, dimensionsCm: { length: 10, width: 10, height: 10 }, destination: "西马", transportMode: "海运", provider: "测试", channel: "" };
 
 describe("SEA pricing formulas", () => {
   it("requires an explicit handling fee for per-kg quotes", () => {
@@ -34,5 +34,17 @@ describe("SEA pricing formulas", () => {
     const second = { ...base, id: "y", ratePerKg: 8 };
     const result = quoteServices([base, second], input);
     expect(result.quotes).toHaveLength(0); expect(result.rejected.every((item) => item.reason === "conflict")).toBe(true);
+  });
+
+  it("matches when any selected category hits (OR)", () => {
+    const result = quoteServices([base], { ...input, categories: ["不存在", "品牌"] });
+    expect(result.quotes).toHaveLength(1);
+    expect(result.quotes[0]!.card.id).toBe("x");
+  });
+
+  it("does not duplicate the same card even if multiple categories match", () => {
+    const result = quoteServices([base], { ...input, categories: ["食品", "品牌"] });
+    expect(result.quotes).toHaveLength(1);
+    expect(new Set(result.quotes.map((q) => q.card.id)).size).toBe(1);
   });
 });

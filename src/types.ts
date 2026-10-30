@@ -19,7 +19,7 @@ export interface PriceCardDocument extends PriceCardVersion { schemaVersion: num
 export interface PreviewIssue { level: "blocker" | "warning"; provider: string; row: number; message: string; }
 export interface PriceCardPreview { previewToken: string; expiresInSeconds: number; summary: ImportSummary; files: Array<{ filename: string; providers: string[]; rows: number }>; issues: PreviewIssue[]; }
 
-export interface QuoteInput { category: string; actualWeightKg: number; volumeM3: number | null; dimensionsCm: { length: number; width: number; height: number } | null; destination: string; transportMode: string; provider: string; channel: string; }
+export interface QuoteInput { categories: string[]; actualWeightKg: number; volumeM3: number | null; dimensionsCm: { length: number; width: number; height: number } | null; destination: string; transportMode: string; provider: string; channel: string; }
 export interface ServiceQuote { card: ServicePriceCard; amount: number; chargeableWeightKg: number; billingQuantity: number; billingUnit: "kg" | "CBM"; volumetricWeightKg: number | null; dimensionsCm: { length: number; width: number; height: number } | null; volumeM3: number | null; dataHints: string[]; formula: string; }
 export interface RejectedServiceCard { card: ServicePriceCard; reason: "overLimit" | "outsideBand" | "missingRate" | "conflict"; chargeableWeightKg: number; }
 export interface OfficialQuote { card: OfficialPriceCard; amount: number; steps: number; }
