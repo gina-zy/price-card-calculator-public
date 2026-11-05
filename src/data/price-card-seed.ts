@@ -9883,8 +9883,8 @@ export const OFFICIAL_PRICE_CARDS: OfficialPriceCard[] = [
     "channel": "Standard",
     "currency": "MYR",
     "startingWeightG": 30,
-    "startingPrice": 0.18,
-    "incrementPricePer10G": 0.12,
+    "startingPrice": 0.06,
+    "incrementPricePer10G": 0.08,
     "sourceRow": 10
   },
   {
@@ -9894,8 +9894,8 @@ export const OFFICIAL_PRICE_CARDS: OfficialPriceCard[] = [
     "channel": "Standard",
     "currency": "MYR",
     "startingWeightG": 30,
-    "startingPrice": 0.18,
-    "incrementPricePer10G": 0.12,
+    "startingPrice": 0.06,
+    "incrementPricePer10G": 0.08,
     "sourceRow": 11
   },
   {
@@ -9934,8 +9934,8 @@ export const OFFICIAL_PRICE_CARDS: OfficialPriceCard[] = [
 ];
 
 export const BUILTIN_PRICE_CARD_VERSION: PriceCardVersion = {
-  "version": "builtin-2026-10-27-1133",
-  "updatedAt": "2026-10-27T11:33:00+08:00",
+  "version": "builtin-2026-10-30-0000",
+  "updatedAt": "2026-10-30T00:00:00+08:00",
   "source": "builtin",
   "summary": {
     "providers": {
