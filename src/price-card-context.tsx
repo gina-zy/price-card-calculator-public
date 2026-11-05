@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { priceCardApi } from "./api";
 import { BUILTIN_PRICE_CARD_VERSION, OFFICIAL_PRICE_CARDS, SERVICE_PRICE_CARDS } from "./data/price-card-seed";
 import { DEFAULT_EXCHANGE_RATES, normalizeExchangeRates, type ExchangeRates } from "./lib/exchange-rates";
-import type { OfficialPriceCard, PriceCardVersion, ServicePriceCard } from "./types";
+import type { OfficialPriceCard, PriceCardDocument, PriceCardVersion, ServicePriceCard } from "./types";
 
 const RATE_KEY = "price-card-calculator:exchange-rates:v1";
 const DOC_KEY = "price-card-calculator:document:v1";
@@ -11,21 +11,24 @@ type Data = { serviceCards: ServicePriceCard[]; officialCards: OfficialPriceCard
 type Value = Data & { loading: boolean; error: string | null; refresh: () => Promise<void> };
 const Context = createContext<Value | null>(null);
 
-function readLocalDocument(): PriceCardVersion | null {
+function readLocalDocument(): PriceCardDocument | null {
   try {
     const stored = localStorage.getItem(DOC_KEY);
     if (!stored) return null;
     const parsed = JSON.parse(stored);
     if (!parsed || typeof parsed !== "object") return null;
+
     // Basic shape check.
-    if (!("serviceCards" in parsed) || !("officialCards" in parsed) || !("version" in parsed)) return null;
-    return parsed as PriceCardVersion;
+    if (!("schemaVersion" in parsed) || !("serviceCards" in parsed) || !("officialCards" in parsed) || !("version" in parsed)) return null;
+    if (!Array.isArray((parsed as any).serviceCards) || !Array.isArray((parsed as any).officialCards)) return null;
+
+    return parsed as PriceCardDocument;
   } catch {
     return null;
   }
 }
 
-export function writeLocalDocument(document: PriceCardVersion) {
+export function writeLocalDocument(document: PriceCardDocument) {
   localStorage.setItem(DOC_KEY, JSON.stringify(document));
 }
 
@@ -38,12 +41,25 @@ function defaults(): Data {
 
   const localDoc = readLocalDocument();
   if (localDoc) {
-    return {
+    // If user previously published a local "builtin" document, it will pin old official cards forever.
+    // We upgrade official cards when the built-in version changes, while preserving user-maintained service cards.
+    const shouldUpgradeBuiltinOfficial = localDoc.source === "builtin" && localDoc.version !== BUILTIN_PRICE_CARD_VERSION.version;
+
+    const next = {
+      schemaVersion: localDoc.schemaVersion,
+      version: shouldUpgradeBuiltinOfficial ? BUILTIN_PRICE_CARD_VERSION.version : localDoc.version,
+      updatedAt: shouldUpgradeBuiltinOfficial ? BUILTIN_PRICE_CARD_VERSION.updatedAt : localDoc.updatedAt,
+      source: shouldUpgradeBuiltinOfficial ? "builtin" : localDoc.source,
+      summary: shouldUpgradeBuiltinOfficial ? BUILTIN_PRICE_CARD_VERSION.summary : localDoc.summary,
       serviceCards: structuredClone(localDoc.serviceCards),
-      officialCards: structuredClone(localDoc.officialCards),
-      exchangeRates,
-      version: localDoc,
-    };
+      officialCards: shouldUpgradeBuiltinOfficial ? structuredClone(OFFICIAL_PRICE_CARDS) : structuredClone(localDoc.officialCards),
+    } satisfies PriceCardDocument;
+
+    if (shouldUpgradeBuiltinOfficial) {
+      try { writeLocalDocument(next); } catch { /* Ignore storage quota / private mode errors. */ }
+    }
+
+    return { serviceCards: next.serviceCards, officialCards: next.officialCards, exchangeRates, version: next };
   }
 
   return { serviceCards: structuredClone(SERVICE_PRICE_CARDS), officialCards: structuredClone(OFFICIAL_PRICE_CARDS), exchangeRates, version: BUILTIN_PRICE_CARD_VERSION };
